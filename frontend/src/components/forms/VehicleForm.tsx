@@ -1,6 +1,7 @@
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { FUEL_TYPE_LABELS } from "../../lib/constants";
-import { CAR_MAKES, getModels } from "../../lib/carData";
+import { CAR_MAKES, getModels, MAKE_NAMES } from "../../lib/carData";
+import { SearchableSelect } from "../ui/SearchableSelect";
 import type { Vehicle, FuelType } from "../../api/types";
 
 const CUSTOM_MAKE = "Другая марка";
@@ -44,7 +45,7 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
   const { make_select: initMakeSelect, make_custom: initMakeCustom } = resolveInitialMake(initial?.make);
   const { model_select: initModelSelect, model_custom: initModelCustom } = resolveInitialModel(initial?.make, initial?.model);
 
-  const { register, handleSubmit, control } = useForm<FormData>({
+  const { register, handleSubmit, control, setValue } = useForm<FormData>({
     defaultValues: {
       make_select: initMakeSelect,
       make_custom: initMakeCustom,
@@ -87,12 +88,24 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
       {/* Make */}
       <div className="field">
         <label className="label">Марка *</label>
-        <select className="select" {...register("make_select", { required: true })}>
-          <option value="">— Выберите марку —</option>
-          {CAR_MAKES.map((m) => (
-            <option key={m.name} value={m.name}>{m.name}</option>
-          ))}
-        </select>
+        <Controller
+          name="make_select"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <SearchableSelect
+              options={MAKE_NAMES}
+              value={field.value}
+              onChange={(v) => {
+                field.onChange(v);
+                // Reset model when make changes
+                setValue("model_select", "");
+                setValue("model_custom", "");
+              }}
+              placeholder="— Выберите марку —"
+            />
+          )}
+        />
         {isCustomMake && (
           <input
             className="input mt-2"
@@ -107,12 +120,19 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
         <label className="label">Модель *</label>
         {models.length > 0 ? (
           <>
-            <select className="select" {...register("model_select", { required: true })}>
-              <option value="">— Выберите модель —</option>
-              {models.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+            <Controller
+              name="model_select"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={models}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="— Выберите модель —"
+                />
+              )}
+            />
             {isCustomModel && (
               <input
                 className="input mt-2"
