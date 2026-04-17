@@ -43,10 +43,10 @@ export function FuelForm({ initial, defaultFuelType = "ai95", onSubmit, onCancel
       date: d.date,
       liters: parseFloat(d.liters),
       total_cost: parseFloat(d.total_cost),
-      fuel_type_override: (d.fuel_type_override as FuelType) || undefined,
-      odometer: d.odometer ? parseInt(d.odometer) : undefined,
-      station_name: d.station_name || undefined,
-      notes: d.notes || undefined,
+      fuel_type_override: (d.fuel_type_override as FuelType) || null,
+      odometer: d.odometer ? parseInt(d.odometer) : null,
+      station_name: d.station_name || null,
+      notes: d.notes || null,
     });
   };
 

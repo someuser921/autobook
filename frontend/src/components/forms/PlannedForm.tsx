@@ -28,9 +28,9 @@ export function PlannedForm({ initial, onSubmit, onCancel, loading }: Props) {
   const submit = (d: FormData) => {
     onSubmit({
       title: d.title,
-      notes: d.notes || undefined,
-      estimated_cost: d.estimated_cost ? parseFloat(d.estimated_cost) : undefined,
-      due_date: d.due_date || undefined,
+      notes: d.notes || null,
+      estimated_cost: d.estimated_cost !== "" ? parseFloat(d.estimated_cost) : null,
+      due_date: d.due_date || null,
     });
   };
 
