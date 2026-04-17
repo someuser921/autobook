@@ -115,4 +115,13 @@ export interface SearchResult {
   title: string;
   category: string | null;
   cost: number | null;
+  odometer: number | null;
+  description: string | null;
+  location: string | null;
+  notes: string | null;
+  next_date: string | null;
+  next_odometer: number | null;
+  liters: number | null;
+  price_per_liter: number | null;
+  station_name: string | null;
 }

@@ -56,7 +56,13 @@ async def search(
             date=r.date.isoformat(),
             title=r.title,
             category=r.category,
-            cost=float(r.cost) if r.cost else None,
+            cost=float(r.cost) if r.cost is not None else None,
+            odometer=r.odometer,
+            description=r.description,
+            location=r.location,
+            notes=r.notes,
+            next_date=r.next_date.isoformat() if r.next_date else None,
+            next_odometer=r.next_odometer,
         ))
 
     # Search fuel by station name
@@ -70,6 +76,8 @@ async def search(
 
     f_result = await session.execute(fq)
     for r in f_result.scalars().all():
+        liters = float(r.liters) if r.liters else 0
+        total = float(r.total_cost) if r.total_cost else 0
         results.append(SearchResult(
             type="fuel",
             id=r.id,
@@ -78,7 +86,12 @@ async def search(
             date=r.date.isoformat(),
             title=r.station_name or "Заправка",
             category=None,
-            cost=float(r.total_cost),
+            cost=total,
+            liters=liters,
+            price_per_liter=round(total / liters, 2) if liters > 0 else None,
+            station_name=r.station_name,
+            odometer=r.odometer,
+            notes=r.notes,
         ))
 
     # Sort all by date desc

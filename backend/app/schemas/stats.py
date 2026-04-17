@@ -42,3 +42,14 @@ class SearchResult(BaseModel):
     title: str
     category: Optional[str]
     cost: Optional[float]
+    # maintenance fields
+    odometer: Optional[int] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    next_date: Optional[str] = None
+    next_odometer: Optional[int] = None
+    # fuel fields
+    liters: Optional[float] = None
+    price_per_liter: Optional[float] = None
+    station_name: Optional[str] = None
