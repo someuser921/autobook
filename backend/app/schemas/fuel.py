@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from datetime import date, datetime
 from app.models.vehicle import FuelType
 
+_Date = date  # alias to avoid Pydantic v2 name collision when field name == type name
+
 
 class FuelCreate(BaseModel):
     date: date
@@ -15,7 +17,7 @@ class FuelCreate(BaseModel):
 
 
 class FuelUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[_Date] = None
     liters: Optional[float] = None
     total_cost: Optional[float] = None
     fuel_type_override: Optional[FuelType] = None

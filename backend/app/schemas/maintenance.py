@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from datetime import date, datetime
 from app.models.maintenance import MaintenanceCategory
 
+_Date = date  # alias to avoid Pydantic v2 name collision when field name == type name
+
 
 class MaintenanceCreate(BaseModel):
     date: date
@@ -12,20 +14,20 @@ class MaintenanceCreate(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     cost: Optional[float] = None
-    next_date: Optional[date] = None
+    next_date: Optional[_Date] = None
     next_odometer: Optional[int] = None
     notes: Optional[str] = None
 
 
 class MaintenanceUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[_Date] = None
     odometer: Optional[int] = None
     category: Optional[MaintenanceCategory] = None
     title: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
     cost: Optional[float] = None
-    next_date: Optional[date] = None
+    next_date: Optional[_Date] = None
     next_odometer: Optional[int] = None
     notes: Optional[str] = None
 
@@ -40,7 +42,7 @@ class MaintenanceOut(BaseModel):
     description: Optional[str]
     location: Optional[str]
     cost: Optional[float]
-    next_date: Optional[date]
+    next_date: Optional[_Date]
     next_odometer: Optional[int]
     notes: Optional[str]
     created_at: datetime
