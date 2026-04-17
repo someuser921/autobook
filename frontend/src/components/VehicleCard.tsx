@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Check, X, Gauge, ChevronDown } from "lucide-react";
+import { Pencil, Check, X, Gauge, ChevronDown, ChevronUp } from "lucide-react";
 import { vehiclesApi, maintenanceApi, plannedApi } from "../api";
 import { useVehicleStore } from "../store/vehicles";
 import { CarLogo } from "./ui/CarLogo";
@@ -97,13 +97,13 @@ function NextServiceBadge({ vehicle }: { vehicle: Vehicle }) {
           <span className="shrink-0">{a.label}</span>
         </div>
       ))}
-      {!expanded && hiddenCount > 0 && (
+      {hiddenCount > 0 && (
         <button
-          onClick={() => setExpanded(true)}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 px-2.5 py-0.5 transition"
+          onClick={() => setExpanded((p) => !p)}
+          className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 transition px-2.5 py-1 rounded-lg self-start"
         >
-          <ChevronDown size={13} />
-          <span>ещё {hiddenCount}</span>
+          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          <span>{expanded ? "свернуть" : `ещё ${hiddenCount}`}</span>
         </button>
       )}
     </div>

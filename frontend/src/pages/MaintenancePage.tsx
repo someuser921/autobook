@@ -106,9 +106,9 @@ export function MaintenancePage() {
                   {r.cost != null && (
                     <span className="text-sm font-semibold text-gray-800">{formatMoney(r.cost)}</span>
                   )}
-                  {r.next_date && (
+                  {(r.next_date || r.next_odometer) && (
                     <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                      след. {formatDate(r.next_date)}
+                      след.{r.next_date ? ` ${formatDate(r.next_date)}` : ""}{r.next_date && r.next_odometer ? " / " : ""}{r.next_odometer ? ` ${r.next_odometer.toLocaleString("ru-RU")} км` : ""}
                     </span>
                   )}
                 </div>
