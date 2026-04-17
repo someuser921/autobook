@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, X } from "lucide-react";
 
 interface Props {
@@ -11,28 +12,54 @@ interface Props {
 export function SearchableSelect({ options, value, onChange, placeholder = "Выберите..." }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const filtered = query.trim()
     ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
     : options;
 
+  // Position the dropdown using fixed coords from trigger
+  const updatePosition = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropH = Math.min(240, filtered.length * 36 + 56);
+    const openUp = spaceBelow < dropH && rect.top > dropH;
+    setDropdownStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      zIndex: 99999,
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+  };
+
   // Close on outside click
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery("");
-      }
+      if (
+        triggerRef.current?.contains(e.target as Node) ||
+        dropdownRef.current?.contains(e.target as Node)
+      ) return;
+      setOpen(false);
+      setQuery("");
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  }, [open]);
 
-  // Focus input when opened
+  // Focus search input when opened
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (open) {
+      updatePosition();
+      setTimeout(() => inputRef.current?.focus(), 10);
+    }
   }, [open]);
 
   const select = (option: string) => {
@@ -48,14 +75,14 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger */}
+    <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((p) => !p)}
         className="input flex items-center justify-between text-left w-full"
       >
-        <span className={value ? "text-gray-900" : "text-gray-400"}>
+        <span className={value ? "text-gray-900 truncate" : "text-gray-400"}>
           {value || placeholder}
         </span>
         <span className="flex items-center gap-1 shrink-0 ml-2">
@@ -68,10 +95,8 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
         </span>
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-          {/* Search input */}
+      {open && createPortal(
+        <div ref={dropdownRef} style={dropdownStyle} className="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
           <div className="p-2 border-b border-gray-100">
             <input
               ref={inputRef}
@@ -82,8 +107,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
               className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          {/* Options list */}
-          <div className="max-h-52 overflow-y-auto overscroll-contain">
+          <div className="max-h-48 overflow-y-auto overscroll-contain">
             {filtered.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-400">Ничего не найдено</div>
             ) : (
@@ -91,7 +115,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
                 <button
                   key={option}
                   type="button"
-                  onClick={() => select(option)}
+                  onMouseDown={(e) => { e.preventDefault(); select(option); }}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                     option === value
                       ? "bg-blue-50 text-blue-700 font-medium"
@@ -103,8 +127,9 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
