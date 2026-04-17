@@ -8,51 +8,87 @@ import { differenceInDays, parseISO, format } from "date-fns";
 import { ru } from "date-fns/locale";
 import type { Vehicle, MaintenanceRecord, PlannedItem } from "../api/types";
 
-function NextServiceBadge({ vehicleId }: { vehicleId: number }) {
+function NextServiceBadge({ vehicle }: { vehicle: Vehicle }) {
   const today = new Date();
+  const odometer = vehicle.current_odometer;
 
   const { data: records = [] } = useQuery<MaintenanceRecord[]>({
-    queryKey: ["maintenance", vehicleId],
-    queryFn: () => maintenanceApi.list(vehicleId).then((r) => r.data),
+    queryKey: ["maintenance", vehicle.id],
+    queryFn: () => maintenanceApi.list(vehicle.id).then((r) => r.data),
   });
 
   const { data: planned = [] } = useQuery<PlannedItem[]>({
-    queryKey: ["planned", vehicleId],
-    queryFn: () => plannedApi.list(vehicleId).then((r) => r.data),
+    queryKey: ["planned", vehicle.id],
+    queryFn: () => plannedApi.list(vehicle.id).then((r) => r.data),
   });
 
-  // Collect all upcoming dates
-  const upcoming: { title: string; date: Date }[] = [];
+  type Alert = { title: string; label: string; urgency: "overdue" | "soon" | "upcoming" };
+  const alerts: Alert[] = [];
 
   records.forEach((r) => {
+    // By date
     if (r.next_date) {
-      upcoming.push({ title: r.title, date: parseISO(r.next_date) });
+      const d = parseISO(r.next_date);
+      const days = differenceInDays(d, today);
+      if (days <= 30) {
+        alerts.push({
+          title: r.title,
+          label: days < 0 ? `просрочено на ${Math.abs(days)} дн.` : days === 0 ? "сегодня" : `${format(d, "d MMM", { locale: ru })} (${days} дн.)`,
+          urgency: days < 0 ? "overdue" : days <= 7 ? "soon" : "upcoming",
+        });
+      }
+    }
+    // By odometer
+    if (r.next_odometer && odometer > 0) {
+      const kmLeft = r.next_odometer - odometer;
+      if (kmLeft <= 1000) {
+        alerts.push({
+          title: r.title,
+          label: kmLeft <= 0 ? `пробег превышен на ${Math.abs(kmLeft).toLocaleString("ru-RU")} км` : `осталось ${kmLeft.toLocaleString("ru-RU")} км`,
+          urgency: kmLeft <= 0 ? "overdue" : kmLeft <= 300 ? "soon" : "upcoming",
+        });
+      }
     }
   });
+
   planned.forEach((p) => {
     if (p.due_date) {
-      upcoming.push({ title: p.title, date: parseISO(p.due_date) });
+      const d = parseISO(p.due_date);
+      const days = differenceInDays(d, today);
+      if (days <= 30) {
+        alerts.push({
+          title: p.title,
+          label: days < 0 ? `просрочено на ${Math.abs(days)} дн.` : days === 0 ? "сегодня" : `${format(d, "d MMM", { locale: ru })} (${days} дн.)`,
+          urgency: days < 0 ? "overdue" : days <= 7 ? "soon" : "upcoming",
+        });
+      }
     }
   });
 
-  // Sort, take nearest future
-  const future = upcoming
-    .filter((u) => u.date >= today)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  if (alerts.length === 0) return null;
 
-  if (future.length === 0) return null;
+  // Show most urgent first
+  const order = { overdue: 0, soon: 1, upcoming: 2 };
+  alerts.sort((a, b) => order[a.urgency] - order[b.urgency]);
 
-  const next = future[0];
-  const days = differenceInDays(next.date, today);
-  const dateStr = format(next.date, "d MMM", { locale: ru });
-
-  const color = days <= 7 ? "text-red-500 bg-red-50" : days <= 30 ? "text-amber-600 bg-amber-50" : "text-blue-600 bg-blue-50";
+  const colorMap = {
+    overdue: "text-red-600 bg-red-50",
+    soon: "text-amber-600 bg-amber-50",
+    upcoming: "text-blue-600 bg-blue-50",
+  };
 
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg ${color}`}>
-      <span>🔧</span>
-      <span className="truncate max-w-[120px]">{next.title}</span>
-      <span className="shrink-0">— {days === 0 ? "сегодня" : `${dateStr} (${days} дн.)`}</span>
+    <div className="flex flex-col gap-1">
+      {alerts.slice(0, 2).map((a, i) => (
+        <div key={i} className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg ${colorMap[a.urgency]}`}>
+          <span>🔧</span>
+          <span className="truncate flex-1">{a.title}</span>
+          <span className="shrink-0">{a.label}</span>
+        </div>
+      ))}
+      {alerts.length > 2 && (
+        <div className="text-xs text-gray-400 px-2.5">+{alerts.length - 2} ещё</div>
+      )}
     </div>
   );
 }
@@ -147,7 +183,7 @@ export function VehicleCard() {
       </div>
 
       {/* Next service */}
-      <NextServiceBadge vehicleId={vehicle.id} />
+      <NextServiceBadge vehicle={vehicle} />
     </div>
   );
 }
