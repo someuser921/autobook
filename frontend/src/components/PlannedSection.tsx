@@ -28,7 +28,7 @@ function urgencyInfo(due_date: string | null): { icon: React.ReactNode; color: s
 }
 
 export function PlannedSection({ vehicleId }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<PlannedItem | null>(null);
   const [completing, setCompleting] = useState<PlannedItem | null>(null);

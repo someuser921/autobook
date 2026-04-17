@@ -98,8 +98,10 @@ export function MaintenancePage() {
                   <span className="text-xs text-gray-400">{formatDate(r.date)}</span>
                 </div>
                 <p className="font-medium text-sm text-gray-900 mt-0.5 truncate">{r.title}</p>
+                {r.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{r.description}</p>}
                 {r.location && <p className="text-xs text-gray-500 truncate">📍 {r.location}</p>}
                 {r.odometer && <p className="text-xs text-gray-400">{formatOdometer(r.odometer)}</p>}
+                {r.notes && <p className="text-xs text-gray-400 line-clamp-1 italic">{r.notes}</p>}
                 <div className="flex items-center gap-3 mt-1">
                   {r.cost != null && (
                     <span className="text-sm font-semibold text-gray-800">{formatMoney(r.cost)}</span>

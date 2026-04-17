@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Check, X, Gauge } from "lucide-react";
+import { Pencil, Check, X, Gauge, ChevronDown } from "lucide-react";
 import { vehiclesApi, maintenanceApi, plannedApi } from "../api";
 import { useVehicleStore } from "../store/vehicles";
 import { CarLogo } from "./ui/CarLogo";
@@ -9,6 +9,7 @@ import { ru } from "date-fns/locale";
 import type { Vehicle, MaintenanceRecord, PlannedItem } from "../api/types";
 
 function NextServiceBadge({ vehicle }: { vehicle: Vehicle }) {
+  const [expanded, setExpanded] = useState(false);
   const today = new Date();
   const odometer = vehicle.current_odometer;
 
@@ -84,17 +85,26 @@ function NextServiceBadge({ vehicle }: { vehicle: Vehicle }) {
     upcoming: "text-blue-600 bg-blue-50",
   };
 
+  const visible = expanded ? alerts : alerts.slice(0, 2);
+  const hiddenCount = alerts.length - 2;
+
   return (
     <div className="flex flex-col gap-1">
-      {alerts.slice(0, 2).map((a, i) => (
+      {visible.map((a, i) => (
         <div key={i} className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg ${colorMap[a.urgency]}`}>
           <span>🔧</span>
           <span className="truncate flex-1">{a.title}</span>
           <span className="shrink-0">{a.label}</span>
         </div>
       ))}
-      {alerts.length > 2 && (
-        <div className="text-xs text-gray-400 px-2.5">+{alerts.length - 2} ещё</div>
+      {!expanded && hiddenCount > 0 && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 px-2.5 py-0.5 transition"
+        >
+          <ChevronDown size={13} />
+          <span>ещё {hiddenCount}</span>
+        </button>
       )}
     </div>
   );
