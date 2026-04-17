@@ -31,6 +31,14 @@ export function MaintenancePage() {
     enabled: !!activeVehicleId,
   });
 
+  const { data: allRecords = [] } = useQuery({
+    queryKey: ["maintenance", activeVehicleId],
+    queryFn: () => maintenanceApi.list(activeVehicleId!).then((r) => r.data),
+    enabled: !!activeVehicleId,
+  });
+
+  const locationSuggestions = [...new Set(allRecords.map((r) => r.location).filter(Boolean) as string[])];
+
   const createMutation = useMutation({
     mutationFn: (data: Partial<MaintenanceRecord>) => maintenanceApi.create(activeVehicleId!, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["maintenance"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setShowForm(false); },
@@ -150,6 +158,7 @@ export function MaintenancePage() {
       {/* Add form */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Новая запись">
         <MaintenanceForm
+          locationSuggestions={locationSuggestions}
           loading={createMutation.isPending}
           onSubmit={(data) => createMutation.mutate(data)}
           onCancel={() => setShowForm(false)}
@@ -161,6 +170,7 @@ export function MaintenancePage() {
         {editRecord && (
           <MaintenanceForm
             initial={editRecord}
+            locationSuggestions={locationSuggestions}
             loading={updateMutation.isPending}
             onSubmit={(data) => updateMutation.mutate({ id: editRecord.id, data })}
             onCancel={() => setEditRecord(null)}

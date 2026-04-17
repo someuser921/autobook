@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { CATEGORY_LABELS } from "../../lib/constants";
 import { today } from "../../lib/utils";
 import type { MaintenanceRecord, MaintenanceCategory } from "../../api/types";
@@ -18,13 +18,14 @@ type FormData = {
 
 interface Props {
   initial?: Partial<MaintenanceRecord>;
+  locationSuggestions?: string[];
   onSubmit: (data: Partial<MaintenanceRecord>) => void;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function MaintenanceForm({ initial, onSubmit, onCancel, loading }: Props) {
-  const { register, handleSubmit } = useForm<FormData>({
+export function MaintenanceForm({ initial, locationSuggestions = [], onSubmit, onCancel, loading }: Props) {
+  const { register, handleSubmit, setValue, control } = useForm<FormData>({
     defaultValues: {
       date: initial?.date || today(),
       odometer: initial?.odometer?.toString() || "",
@@ -38,6 +39,12 @@ export function MaintenanceForm({ initial, onSubmit, onCancel, loading }: Props)
       notes: initial?.notes || "",
     },
   });
+
+  const locationValue = useWatch({ control, name: "location" });
+
+  const filtered = locationSuggestions.filter(
+    (s) => s !== locationValue && s.toLowerCase().includes((locationValue || "").toLowerCase())
+  );
 
   const submit = (d: FormData) => {
     onSubmit({
@@ -81,6 +88,20 @@ export function MaintenanceForm({ initial, onSubmit, onCancel, loading }: Props)
       <div className="field">
         <label className="label">Где сделано</label>
         <input className="input" placeholder="Сервис / сам" {...register("location")} />
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {filtered.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setValue("location", s)}
+                className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="field">
         <label className="label">Стоимость (₽)</label>
