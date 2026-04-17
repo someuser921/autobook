@@ -104,7 +104,8 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Вы
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Поиск..."
-              className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ fontSize: 16 }}
             />
           </div>
           <div className="max-h-48 overflow-y-auto overscroll-contain">
