@@ -46,7 +46,7 @@ export function AppLayout() {
   const noVehicles = !isLoading && vehicles.length === 0;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-full max-w-2xl mx-auto">
+    <div className="h-screen flex flex-col bg-gray-50 w-full max-w-2xl mx-auto overflow-hidden">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-40 w-full">
         <div className="flex items-center gap-2 mr-auto min-w-0">
@@ -81,7 +81,7 @@ export function AppLayout() {
         </main>
       ) : (
         <>
-          <main className="flex-1 pb-nav overflow-x-hidden">
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-nav">
             <Outlet />
           </main>
 
