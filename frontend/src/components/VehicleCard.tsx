@@ -25,7 +25,14 @@ function NextServiceBadge({ vehicle }: { vehicle: Vehicle }) {
   type Alert = { title: string; label: string; urgency: "overdue" | "soon" | "upcoming" };
   const alerts: Alert[] = [];
 
-  records.forEach((r) => {
+  // Only the most recent record per category — adding a new service auto-clears old reminders
+  const latestPerCategory = new Map<string, MaintenanceRecord>();
+  for (const r of records) {
+    const existing = latestPerCategory.get(r.category);
+    if (!existing || r.date > existing.date) latestPerCategory.set(r.category, r);
+  }
+
+  latestPerCategory.forEach((r) => {
     // By date
     if (r.next_date) {
       const d = parseISO(r.next_date);
