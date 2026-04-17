@@ -42,14 +42,14 @@ export function MaintenanceForm({ initial, onSubmit, onCancel, loading }: Props)
   const submit = (d: FormData) => {
     onSubmit({
       date: d.date,
-      odometer: d.odometer ? parseInt(d.odometer) : null,
+      odometer: d.odometer !== "" ? parseInt(d.odometer) : null,
       category: d.category,
       title: d.title,
       description: d.description || null,
       location: d.location || null,
       cost: d.cost !== "" ? parseFloat(d.cost) : null,
       next_date: d.next_date || null,
-      next_odometer: d.next_odometer ? parseInt(d.next_odometer) : null,
+      next_odometer: d.next_odometer !== "" ? parseInt(d.next_odometer) : null,
       notes: d.notes || null,
     });
   };
