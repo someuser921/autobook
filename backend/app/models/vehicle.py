@@ -36,3 +36,6 @@ class Vehicle(Base):
     fuel_records: Mapped[list["FuelRecord"]] = relationship(
         "FuelRecord", back_populates="vehicle", cascade="all, delete-orphan"
     )
+    planned_maintenance: Mapped[list["PlannedMaintenance"]] = relationship(
+        "PlannedMaintenance", back_populates="vehicle", cascade="all, delete-orphan"
+    )

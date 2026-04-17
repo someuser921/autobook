@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.dependencies import get_current_user
 from app.schemas.user import UserOut
-from app.routers import auth, vehicles, maintenance, fuel, stats, search
+from app.routers import auth, vehicles, maintenance, fuel, stats, search, planned
 
 app = FastAPI(title="AutoBook API", version="1.0.0")
 
@@ -21,6 +21,7 @@ app.include_router(maintenance.router, prefix="/api")
 app.include_router(fuel.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
+app.include_router(planned.router, prefix="/api")
 
 
 @app.get("/api/auth/me", response_model=UserOut, tags=["auth"])

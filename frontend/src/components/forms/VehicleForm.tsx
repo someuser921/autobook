@@ -1,10 +1,16 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { FUEL_TYPE_LABELS } from "../../lib/constants";
+import { CAR_MAKES, getModels } from "../../lib/carData";
 import type { Vehicle, FuelType } from "../../api/types";
 
+const CUSTOM_MAKE = "Другая марка";
+const CUSTOM_MODEL = "Другая";
+
 type FormData = {
-  make: string;
-  model: string;
+  make_select: string;
+  make_custom: string;
+  model_select: string;
+  model_custom: string;
   year: string;
   color: string;
   plate: string;
@@ -12,6 +18,20 @@ type FormData = {
   fuel_type: FuelType;
   current_odometer: string;
 };
+
+function resolveInitialMake(make?: string) {
+  if (!make) return { make_select: "", make_custom: "" };
+  const found = CAR_MAKES.find((m) => m.name === make);
+  if (found) return { make_select: make, make_custom: "" };
+  return { make_select: CUSTOM_MAKE, make_custom: make };
+}
+
+function resolveInitialModel(make?: string, model?: string) {
+  if (!model) return { model_select: "", model_custom: "" };
+  const models = getModels(make ?? "");
+  if (models.includes(model)) return { model_select: model, model_custom: "" };
+  return { model_select: CUSTOM_MODEL, model_custom: model };
+}
 
 interface Props {
   initial?: Partial<Vehicle>;
@@ -21,10 +41,15 @@ interface Props {
 }
 
 export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
-  const { register, handleSubmit } = useForm<FormData>({
+  const { make_select: initMakeSelect, make_custom: initMakeCustom } = resolveInitialMake(initial?.make);
+  const { model_select: initModelSelect, model_custom: initModelCustom } = resolveInitialModel(initial?.make, initial?.model);
+
+  const { register, handleSubmit, control } = useForm<FormData>({
     defaultValues: {
-      make: initial?.make || "",
-      model: initial?.model || "",
+      make_select: initMakeSelect,
+      make_custom: initMakeCustom,
+      model_select: initModelSelect,
+      model_custom: initModelCustom,
       year: initial?.year?.toString() || "",
       color: initial?.color || "",
       plate: initial?.plate || "",
@@ -34,10 +59,20 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
     },
   });
 
+  const makeSelect = useWatch({ control, name: "make_select" });
+  const modelSelect = useWatch({ control, name: "model_select" });
+  const isCustomMake = makeSelect === CUSTOM_MAKE;
+  const models = getModels(makeSelect);
+  const isCustomModel = modelSelect === CUSTOM_MODEL || models.length === 0;
+
   const submit = (d: FormData) => {
+    const make = isCustomMake ? d.make_custom : d.make_select;
+    const model = (models.length === 0 || d.model_select === CUSTOM_MODEL)
+      ? d.model_custom
+      : d.model_select;
     onSubmit({
-      make: d.make,
-      model: d.model,
+      make,
+      model,
       year: d.year ? parseInt(d.year) : undefined,
       color: d.color || undefined,
       plate: d.plate || undefined,
@@ -49,16 +84,52 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit(submit)} className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="field">
-          <label className="label">Марка *</label>
-          <input className="input" placeholder="Toyota" {...register("make", { required: true })} />
-        </div>
-        <div className="field">
-          <label className="label">Модель *</label>
-          <input className="input" placeholder="Camry" {...register("model", { required: true })} />
-        </div>
+      {/* Make */}
+      <div className="field">
+        <label className="label">Марка *</label>
+        <select className="select" {...register("make_select", { required: true })}>
+          <option value="">— Выберите марку —</option>
+          {CAR_MAKES.map((m) => (
+            <option key={m.name} value={m.name}>{m.name}</option>
+          ))}
+        </select>
+        {isCustomMake && (
+          <input
+            className="input mt-2"
+            placeholder="Введите марку"
+            {...register("make_custom", { required: isCustomMake })}
+          />
+        )}
       </div>
+
+      {/* Model */}
+      <div className="field">
+        <label className="label">Модель *</label>
+        {models.length > 0 ? (
+          <>
+            <select className="select" {...register("model_select", { required: true })}>
+              <option value="">— Выберите модель —</option>
+              {models.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            {isCustomModel && (
+              <input
+                className="input mt-2"
+                placeholder="Введите модель"
+                {...register("model_custom", { required: isCustomModel })}
+              />
+            )}
+          </>
+        ) : (
+          <input
+            className="input"
+            placeholder="Введите модель"
+            {...register("model_custom", { required: true })}
+          />
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="field">
           <label className="label">Год</label>

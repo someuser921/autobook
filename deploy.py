@@ -13,7 +13,7 @@ PORT = 22
 USER = "root"
 REMOTE_DIR = "/opt/autobook"
 SERVICE_NAME = "autobook"
-APP_PORT = 8090
+APP_PORT = 8091
 
 EXCLUDE_DIRS = {".venv", "__pycache__", "dist"}
 EXCLUDE_EXTS = {".pyc"}

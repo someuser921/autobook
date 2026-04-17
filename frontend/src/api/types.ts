@@ -94,6 +94,17 @@ export interface FuelStats {
   months: FuelMonthStat[];
 }
 
+export interface PlannedItem {
+  id: number;
+  vehicle_id: number;
+  title: string;
+  notes: string | null;
+  estimated_cost: number | null;
+  due_date: string | null;
+  is_done: boolean;
+  created_at: string;
+}
+
 export interface SearchResult {
   type: "maintenance" | "fuel";
   id: number;

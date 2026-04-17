@@ -9,6 +9,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Spinner } from "../components/ui/Spinner";
 import { MaintenanceForm } from "../components/forms/MaintenanceForm";
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from "../lib/constants";
+import { PlannedSection } from "../components/PlannedSection";
 import { formatDate, formatMoney, formatOdometer } from "../lib/utils";
 import type { MaintenanceRecord, MaintenanceCategory } from "../api/types";
 
@@ -63,6 +64,11 @@ export function MaintenancePage() {
         <button className="btn-primary px-3 py-1.5" onClick={() => setShowForm(true)}>
           <Plus size={16} /> Добавить
         </button>
+      </div>
+
+      {/* Planned section */}
+      <div className="px-4 pt-3 pb-1">
+        <PlannedSection vehicleId={activeVehicleId} />
       </div>
 
       {/* Records */}

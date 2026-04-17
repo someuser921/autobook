@@ -1,7 +1,7 @@
 import { api } from "./client";
 import type {
   User, Vehicle, MaintenanceRecord, FuelRecord,
-  MaintenanceStats, FuelStats, SearchResult, MaintenanceCategory,
+  MaintenanceStats, FuelStats, SearchResult, MaintenanceCategory, PlannedItem,
 } from "./types";
 
 // Auth
@@ -45,6 +45,17 @@ export const fuelApi = {
   delete: (id: number) => api.delete(`/fuel/${id}`),
   stats: (vehicleId: number, year?: number) =>
     api.get<FuelStats>(`/vehicles/${vehicleId}/stats/fuel`, { params: { year } }),
+};
+
+// Planned maintenance
+export const plannedApi = {
+  list: (vehicleId: number, includeDone = false) =>
+    api.get<PlannedItem[]>(`/vehicles/${vehicleId}/planned`, { params: { include_done: includeDone } }),
+  create: (vehicleId: number, data: Partial<PlannedItem>) =>
+    api.post<PlannedItem>(`/vehicles/${vehicleId}/planned`, data),
+  update: (id: number, data: Partial<PlannedItem>) =>
+    api.patch<PlannedItem>(`/planned/${id}`, data),
+  delete: (id: number) => api.delete(`/planned/${id}`),
 };
 
 // Search

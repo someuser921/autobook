@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Plus, Pencil } from "lucide-react";
+import { ChevronDown, Plus, Pencil, Trash2 } from "lucide-react";
+import { CarLogo } from "./ui/CarLogo";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { vehiclesApi } from "../api";
 import { useVehicleStore } from "../store/vehicles";
 import { Modal } from "./ui/Modal";
@@ -12,6 +14,8 @@ export function VehicleSwitcher() {
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
+  const [deleteConfirm2, setDeleteConfirm2] = useState(false);
   const qc = useQueryClient();
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
@@ -46,6 +50,17 @@ export function VehicleSwitcher() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => vehiclesApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles"] });
+      const remaining = vehicles.filter((v) => v.id !== deleteVehicle?.id);
+      if (remaining.length > 0) setActiveVehicle(remaining[0].id);
+      setDeleteVehicle(null);
+      setDeleteConfirm2(false);
+    },
+  });
+
   return (
     <>
       <button
@@ -66,7 +81,9 @@ export function VehicleSwitcher() {
                   v.id === activeVehicleId ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50"
                 }`}
               >
-                <span className="text-xl">🚗</span>
+                <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                <CarLogo make={v.make} size={28} />
+              </div>
                 <div className="min-w-0">
                   <div className="font-medium text-sm truncate">{v.make} {v.model}</div>
                   <div className="text-xs text-gray-500">
@@ -79,6 +96,12 @@ export function VehicleSwitcher() {
                 className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition shrink-0"
               >
                 <Pencil size={15} />
+              </button>
+              <button
+                onClick={() => { setOpen(false); setDeleteVehicle(v); }}
+                className="p-2 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition shrink-0"
+              >
+                <Trash2 size={15} />
               </button>
             </div>
           ))}
@@ -106,6 +129,25 @@ export function VehicleSwitcher() {
           />
         )}
       </Modal>
+
+      {/* Delete step 1 */}
+      <ConfirmDialog
+        open={!!deleteVehicle && !deleteConfirm2}
+        onClose={() => setDeleteVehicle(null)}
+        onConfirm={() => setDeleteConfirm2(true)}
+        title="Удалить авто?"
+        message={`Удалить «${deleteVehicle?.make} ${deleteVehicle?.model}»? Все записи обслуживания, заправок и планов будут удалены. Это действие необратимо.`}
+      />
+
+      {/* Delete step 2 */}
+      <ConfirmDialog
+        open={!!deleteVehicle && deleteConfirm2}
+        onClose={() => { setDeleteVehicle(null); setDeleteConfirm2(false); }}
+        onConfirm={() => deleteVehicle && deleteMutation.mutate(deleteVehicle.id)}
+        title="Вы уверены?"
+        message="Нажмите «Удалить» ещё раз для окончательного подтверждения. Восстановить данные будет невозможно."
+        loading={deleteMutation.isPending}
+      />
     </>
   );
 }
