@@ -33,12 +33,12 @@ export function FuelPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<FuelRecord>) => fuelApi.create(activeVehicleId!, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["fuel"] }); setShowForm(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["fuel"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setShowForm(false); },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<FuelRecord> }) => fuelApi.update(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["fuel"] }); setEditRecord(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["fuel"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setEditRecord(null); },
   });
 
   const deleteMutation = useMutation({

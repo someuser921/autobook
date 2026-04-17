@@ -33,13 +33,13 @@ export function MaintenancePage() {
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<MaintenanceRecord>) => maintenanceApi.create(activeVehicleId!, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["maintenance"] }); setShowForm(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["maintenance"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setShowForm(false); },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<MaintenanceRecord> }) =>
       maintenanceApi.update(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["maintenance"] }); setEditRecord(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["maintenance"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setEditRecord(null); },
   });
 
   const deleteMutation = useMutation({

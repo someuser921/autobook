@@ -68,15 +68,17 @@ async def update_fuel(
     session: AsyncSession = Depends(get_session),
 ):
     result = await session.execute(
-        select(FuelRecord)
+        select(FuelRecord, Vehicle)
         .join(Vehicle)
         .where(FuelRecord.id == record_id, Vehicle.user_id == user.id)
     )
-    r = result.scalar_one_or_none()
-    if not r:
+    row = result.one_or_none()
+    if not row:
         raise HTTPException(status_code=404, detail="Record not found")
+    r, v = row
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(r, field, value)
+    sync_odometer(v, data.odometer)
     await session.commit()
     await session.refresh(r)
     return FuelOut.from_orm_with_price(r)
