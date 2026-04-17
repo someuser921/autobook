@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Pencil } from "lucide-react";
 import { vehiclesApi } from "../api";
 import { useVehicleStore } from "../store/vehicles";
 import { Modal } from "./ui/Modal";
@@ -11,6 +11,7 @@ export function VehicleSwitcher() {
   const { activeVehicleId, setActiveVehicle } = useVehicleStore();
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const qc = useQueryClient();
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
@@ -36,6 +37,15 @@ export function VehicleSwitcher() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Vehicle> }) =>
+      vehiclesApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles"] });
+      setEditingVehicle(null);
+    },
+  });
+
   return (
     <>
       <button
@@ -49,21 +59,28 @@ export function VehicleSwitcher() {
       <Modal open={open} onClose={() => setOpen(false)} title="Выбор авто">
         <div className="flex flex-col gap-1 mb-3">
           {vehicles.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => { setActiveVehicle(v.id); setOpen(false); }}
-              className={`flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition ${
-                v.id === activeVehicleId ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50"
-              }`}
-            >
-              <span className="text-xl">🚗</span>
-              <div>
-                <div className="font-medium text-sm">{v.make} {v.model}</div>
-                <div className="text-xs text-gray-500">
-                  {v.year && `${v.year} · `}{v.plate && v.plate}
+            <div key={v.id} className="flex items-center gap-1">
+              <button
+                onClick={() => { setActiveVehicle(v.id); setOpen(false); }}
+                className={`flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition flex-1 min-w-0 ${
+                  v.id === activeVehicleId ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-xl">🚗</span>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{v.make} {v.model}</div>
+                  <div className="text-xs text-gray-500">
+                    {v.year && `${v.year} · `}{v.plate && v.plate}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={() => { setOpen(false); setEditingVehicle(v); }}
+                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition shrink-0"
+              >
+                <Pencil size={15} />
+              </button>
+            </div>
           ))}
         </div>
         <button className="btn-primary w-full" onClick={() => { setOpen(false); setShowForm(true); }}>
@@ -77,6 +94,17 @@ export function VehicleSwitcher() {
           onSubmit={(data) => createMutation.mutate(data)}
           onCancel={() => setShowForm(false)}
         />
+      </Modal>
+
+      <Modal open={!!editingVehicle} onClose={() => setEditingVehicle(null)} title="Редактирование авто">
+        {editingVehicle && (
+          <VehicleForm
+            initial={editingVehicle}
+            loading={updateMutation.isPending}
+            onSubmit={(data) => updateMutation.mutate({ id: editingVehicle.id, data })}
+            onCancel={() => setEditingVehicle(null)}
+          />
+        )}
       </Modal>
     </>
   );

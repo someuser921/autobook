@@ -4,5 +4,5 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/autobook/",  // GitHub Pages repo subfolder — change to "/" if using custom domain
+  base: "/",
 });

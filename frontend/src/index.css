@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
   * {
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
@@ -45,5 +49,13 @@
   }
   .field {
     @apply flex flex-col gap-1;
+  }
+
+  /* Safe area utilities for iPhone home bar */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+  .pb-nav {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }
