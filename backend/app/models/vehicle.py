@@ -27,6 +27,7 @@ class Vehicle(Base):
     vin: Mapped[str | None] = mapped_column(String(17), nullable=True)
     fuel_type: Mapped[FuelType] = mapped_column(Enum(FuelType), nullable=False, default=FuelType.ai95)
     current_odometer: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    odometer_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship("User", back_populates="vehicles")

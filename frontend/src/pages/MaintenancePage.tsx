@@ -10,6 +10,7 @@ import { Spinner } from "../components/ui/Spinner";
 import { MaintenanceForm } from "../components/forms/MaintenanceForm";
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from "../lib/constants";
 import { PlannedSection } from "../components/PlannedSection";
+import { VehicleCard } from "../components/VehicleCard";
 import { formatDate, formatMoney, formatOdometer } from "../lib/utils";
 import type { MaintenanceRecord, MaintenanceCategory } from "../api/types";
 
@@ -65,6 +66,9 @@ export function MaintenancePage() {
           <Plus size={16} /> Добавить
         </button>
       </div>
+
+      {/* Vehicle card */}
+      <VehicleCard />
 
       {/* Planned section */}
       <div className="px-4 pt-3 pb-1">

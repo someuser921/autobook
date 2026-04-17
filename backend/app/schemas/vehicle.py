@@ -37,6 +37,7 @@ class VehicleOut(BaseModel):
     vin: Optional[str]
     fuel_type: FuelType
     current_odometer: int
+    odometer_updated_at: Optional[datetime]
     created_at: datetime
 
     model_config = {"from_attributes": True}

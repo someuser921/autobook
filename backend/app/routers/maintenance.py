@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.models.maintenance import MaintenanceRecord, MaintenanceCategory
 from app.schemas.maintenance import MaintenanceCreate, MaintenanceUpdate, MaintenanceOut
+from app.services.odometer import sync_odometer
 
 router = APIRouter(tags=["maintenance"])
 
@@ -59,9 +60,7 @@ async def create_maintenance(
     v = await check_vehicle_access(vehicle_id, user, session)
     record = MaintenanceRecord(**data.model_dump(), vehicle_id=vehicle_id)
     session.add(record)
-    # update vehicle odometer if provided and greater
-    if data.odometer and data.odometer > v.current_odometer:
-        v.current_odometer = data.odometer
+    sync_odometer(v, data.odometer)
     await session.commit()
     await session.refresh(record)
     return record
@@ -92,15 +91,17 @@ async def update_maintenance(
     session: AsyncSession = Depends(get_session),
 ):
     result = await session.execute(
-        select(MaintenanceRecord)
+        select(MaintenanceRecord, Vehicle)
         .join(Vehicle)
         .where(MaintenanceRecord.id == record_id, Vehicle.user_id == user.id)
     )
-    r = result.scalar_one_or_none()
-    if not r:
+    row = result.one_or_none()
+    if not row:
         raise HTTPException(status_code=404, detail="Record not found")
+    r, v = row
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(r, field, value)
+    sync_odometer(v, data.odometer)
     await session.commit()
     await session.refresh(r)
     return r

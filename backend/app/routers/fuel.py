@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.models.fuel import FuelRecord
 from app.schemas.fuel import FuelCreate, FuelUpdate, FuelOut
+from app.services.odometer import sync_odometer
 
 router = APIRouter(tags=["fuel"])
 
@@ -53,8 +54,7 @@ async def create_fuel(
     v = await check_vehicle_access(vehicle_id, user, session)
     record = FuelRecord(**data.model_dump(), vehicle_id=vehicle_id)
     session.add(record)
-    if data.odometer and data.odometer > v.current_odometer:
-        v.current_odometer = data.odometer
+    sync_odometer(v, data.odometer)
     await session.commit()
     await session.refresh(record)
     return FuelOut.from_orm_with_price(record)

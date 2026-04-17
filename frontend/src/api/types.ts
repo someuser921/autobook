@@ -30,6 +30,7 @@ export interface Vehicle {
   vin: string | null;
   fuel_type: FuelType;
   current_odometer: number;
+  odometer_updated_at: string | null;
   created_at: string;
 }
 
