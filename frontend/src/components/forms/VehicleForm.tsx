@@ -54,7 +54,7 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
       plate: initial?.plate || "",
       vin: initial?.vin || "",
       fuel_type: initial?.fuel_type || "ai95",
-      current_odometer: initial?.current_odometer?.toString() || "0",
+      current_odometer: initial?.current_odometer ? initial.current_odometer.toString() : "",
     },
   });
 
@@ -85,7 +85,7 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
       plate: d.plate || undefined,
       vin: d.vin || undefined,
       fuel_type: d.fuel_type,
-      current_odometer: parseInt(d.current_odometer) || 0,
+      current_odometer: d.current_odometer ? parseInt(d.current_odometer) : 0,
     });
   };
 
