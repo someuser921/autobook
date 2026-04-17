@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { FUEL_TYPE_LABELS } from "../../lib/constants";
 import { today } from "../../lib/utils";
 import type { FuelRecord, FuelType } from "../../api/types";
@@ -16,13 +16,14 @@ type FormData = {
 interface Props {
   initial?: Partial<FuelRecord>;
   defaultFuelType?: FuelType;
+  stationSuggestions?: string[];
   onSubmit: (data: Partial<FuelRecord>) => void;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function FuelForm({ initial, defaultFuelType = "ai95", onSubmit, onCancel, loading }: Props) {
-  const { register, handleSubmit, watch } = useForm<FormData>({
+export function FuelForm({ initial, defaultFuelType = "ai95", stationSuggestions = [], onSubmit, onCancel, loading }: Props) {
+  const { register, handleSubmit, watch, setValue, control } = useForm<FormData>({
     defaultValues: {
       date: initial?.date || today(),
       liters: initial?.liters?.toString() || "",
@@ -37,6 +38,11 @@ export function FuelForm({ initial, defaultFuelType = "ai95", onSubmit, onCancel
   const liters = parseFloat(watch("liters") || "0");
   const cost = parseFloat(watch("total_cost") || "0");
   const pricePerLiter = liters > 0 && cost > 0 ? (cost / liters).toFixed(2) : null;
+
+  const stationValue = useWatch({ control, name: "station_name" });
+  const filteredStations = stationSuggestions.filter(
+    (s) => s !== stationValue && s.toLowerCase().includes((stationValue || "").toLowerCase())
+  );
 
   const submit = (d: FormData) => {
     onSubmit({
@@ -91,6 +97,20 @@ export function FuelForm({ initial, defaultFuelType = "ai95", onSubmit, onCancel
       <div className="field">
         <label className="label">Заправка</label>
         <input className="input" placeholder="Название / адрес" {...register("station_name")} />
+        {filteredStations.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {filteredStations.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setValue("station_name", s)}
+                className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="field">
         <label className="label">Заметки</label>

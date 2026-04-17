@@ -31,6 +31,8 @@ export function FuelPage() {
     enabled: !!activeVehicleId,
   });
 
+  const stationSuggestions = [...new Set(records.map((r) => r.station_name).filter(Boolean) as string[])];
+
   const createMutation = useMutation({
     mutationFn: (data: Partial<FuelRecord>) => fuelApi.create(activeVehicleId!, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["fuel"] }); qc.invalidateQueries({ queryKey: ["vehicles"] }); setShowForm(false); },
@@ -134,6 +136,7 @@ export function FuelPage() {
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Новая заправка">
         <FuelForm
           defaultFuelType={vehicle?.fuel_type}
+          stationSuggestions={stationSuggestions}
           loading={createMutation.isPending}
           onSubmit={(data) => createMutation.mutate(data)}
           onCancel={() => setShowForm(false)}
@@ -145,6 +148,7 @@ export function FuelPage() {
           <FuelForm
             initial={editRecord}
             defaultFuelType={vehicle?.fuel_type}
+            stationSuggestions={stationSuggestions}
             loading={updateMutation.isPending}
             onSubmit={(data) => updateMutation.mutate({ id: editRecord.id, data })}
             onCancel={() => setEditRecord(null)}
