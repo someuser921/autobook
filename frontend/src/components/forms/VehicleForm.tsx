@@ -1,6 +1,7 @@
-import { useForm, useWatch, Controller } from "react-hook-form";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FUEL_TYPE_LABELS } from "../../lib/constants";
-import { CAR_MAKES, getModels, MAKE_NAMES } from "../../lib/carData";
+import { getModels, MAKE_NAMES } from "../../lib/carData";
 import { SearchableSelect } from "../ui/SearchableSelect";
 import type { Vehicle, FuelType } from "../../api/types";
 
@@ -8,10 +9,6 @@ const CUSTOM_MAKE = "Другая марка";
 const CUSTOM_MODEL = "Другая";
 
 type FormData = {
-  make_select: string;
-  make_custom: string;
-  model_select: string;
-  model_custom: string;
   year: string;
   color: string;
   plate: string;
@@ -20,18 +17,17 @@ type FormData = {
   current_odometer: string;
 };
 
-function resolveInitialMake(make?: string) {
-  if (!make) return { make_select: "", make_custom: "" };
-  const found = CAR_MAKES.find((m) => m.name === make);
-  if (found) return { make_select: make, make_custom: "" };
-  return { make_select: CUSTOM_MAKE, make_custom: make };
+function resolveInitialMake(make?: string): { select: string; custom: string } {
+  if (!make) return { select: "", custom: "" };
+  if (MAKE_NAMES.includes(make)) return { select: make, custom: "" };
+  return { select: CUSTOM_MAKE, custom: make };
 }
 
-function resolveInitialModel(make?: string, model?: string) {
-  if (!model) return { model_select: "", model_custom: "" };
+function resolveInitialModel(make?: string, model?: string): { select: string; custom: string } {
+  if (!model) return { select: "", custom: "" };
   const models = getModels(make ?? "");
-  if (models.includes(model)) return { model_select: model, model_custom: "" };
-  return { model_select: CUSTOM_MODEL, model_custom: model };
+  if (models.includes(model)) return { select: model, custom: "" };
+  return { select: CUSTOM_MODEL, custom: model };
 }
 
 interface Props {
@@ -42,15 +38,17 @@ interface Props {
 }
 
 export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
-  const { make_select: initMakeSelect, make_custom: initMakeCustom } = resolveInitialMake(initial?.make);
-  const { model_select: initModelSelect, model_custom: initModelCustom } = resolveInitialModel(initial?.make, initial?.model);
+  const initMake = resolveInitialMake(initial?.make);
+  const initModel = resolveInitialModel(initial?.make, initial?.model);
 
-  const { register, handleSubmit, control, setValue } = useForm<FormData>({
+  const [makeSelect, setMakeSelect] = useState(initMake.select);
+  const [makeCustom, setMakeCustom] = useState(initMake.custom);
+  const [modelSelect, setModelSelect] = useState(initModel.select);
+  const [modelCustom, setModelCustom] = useState(initModel.custom);
+  const [errors, setErrors] = useState<{ make?: boolean; model?: boolean }>({});
+
+  const { register, handleSubmit } = useForm<FormData>({
     defaultValues: {
-      make_select: initMakeSelect,
-      make_custom: initMakeCustom,
-      model_select: initModelSelect,
-      model_custom: initModelCustom,
       year: initial?.year?.toString() || "",
       color: initial?.color || "",
       plate: initial?.plate || "",
@@ -60,17 +58,25 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
     },
   });
 
-  const makeSelect = useWatch({ control, name: "make_select" });
-  const modelSelect = useWatch({ control, name: "model_select" });
   const isCustomMake = makeSelect === CUSTOM_MAKE;
   const models = getModels(makeSelect);
-  const isCustomModel = modelSelect === CUSTOM_MODEL || models.length === 0;
+  const isCustomModel = modelSelect === CUSTOM_MODEL;
+
+  const resolveMake = () => isCustomMake ? makeCustom.trim() : makeSelect;
+  const resolveModel = () => {
+    if (models.length === 0) return modelCustom.trim();
+    if (isCustomModel) return modelCustom.trim();
+    return modelSelect;
+  };
 
   const submit = (d: FormData) => {
-    const make = isCustomMake ? d.make_custom : d.make_select;
-    const model = (models.length === 0 || d.model_select === CUSTOM_MODEL)
-      ? d.model_custom
-      : d.model_select;
+    const make = resolveMake();
+    const model = resolveModel();
+    const newErrors: typeof errors = {};
+    if (!make) newErrors.make = true;
+    if (!model) newErrors.model = true;
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
     onSubmit({
       make,
       model,
@@ -88,29 +94,24 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
       {/* Make */}
       <div className="field">
         <label className="label">Марка *</label>
-        <Controller
-          name="make_select"
-          control={control}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <SearchableSelect
-              options={MAKE_NAMES}
-              value={field.value}
-              onChange={(v) => {
-                field.onChange(v);
-                // Reset model when make changes
-                setValue("model_select", "");
-                setValue("model_custom", "");
-              }}
-              placeholder="— Выберите марку —"
-            />
-          )}
+        <SearchableSelect
+          options={MAKE_NAMES}
+          value={makeSelect}
+          onChange={(v) => {
+            setMakeSelect(v);
+            setModelSelect("");
+            setModelCustom("");
+            setErrors((e) => ({ ...e, make: false }));
+          }}
+          placeholder="— Выберите марку —"
         />
+        {errors.make && <span className="text-xs text-red-500 mt-0.5">Укажите марку</span>}
         {isCustomMake && (
           <input
             className="input mt-2"
             placeholder="Введите марку"
-            {...register("make_custom", { required: isCustomMake })}
+            value={makeCustom}
+            onChange={(e) => setMakeCustom(e.target.value)}
           />
         )}
       </div>
@@ -120,24 +121,21 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
         <label className="label">Модель *</label>
         {models.length > 0 ? (
           <>
-            <Controller
-              name="model_select"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <SearchableSelect
-                  options={models}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="— Выберите модель —"
-                />
-              )}
+            <SearchableSelect
+              options={models}
+              value={modelSelect}
+              onChange={(v) => {
+                setModelSelect(v);
+                setErrors((e) => ({ ...e, model: false }));
+              }}
+              placeholder="— Выберите модель —"
             />
             {isCustomModel && (
               <input
                 className="input mt-2"
                 placeholder="Введите модель"
-                {...register("model_custom", { required: isCustomModel })}
+                value={modelCustom}
+                onChange={(e) => setModelCustom(e.target.value)}
               />
             )}
           </>
@@ -145,9 +143,14 @@ export function VehicleForm({ initial, onSubmit, onCancel, loading }: Props) {
           <input
             className="input"
             placeholder="Введите модель"
-            {...register("model_custom", { required: true })}
+            value={modelCustom}
+            onChange={(e) => {
+              setModelCustom(e.target.value);
+              setErrors((e2) => ({ ...e2, model: false }));
+            }}
           />
         )}
+        {errors.model && <span className="text-xs text-red-500 mt-0.5">Укажите модель</span>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
