@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str
     secret_key: str
-    access_token_expire_minutes: int = 43200  # 30 days
+    access_token_expire_minutes: int = 10080  # 7 days
     allowed_origins: str = "http://localhost:5173"
     uploads_dir: str = "uploads"
 

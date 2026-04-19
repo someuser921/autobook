@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date, datetime
 from app.models.vehicle import FuelType
 
@@ -8,22 +8,22 @@ _Date = date  # alias to avoid Pydantic v2 name collision when field name == typ
 
 class FuelCreate(BaseModel):
     date: date
-    liters: float
-    total_cost: float
+    liters: float = Field(gt=0, le=10_000)
+    total_cost: float = Field(ge=0, le=10_000_000)
     fuel_type_override: Optional[FuelType] = None
-    odometer: Optional[int] = None
-    station_name: Optional[str] = None
-    notes: Optional[str] = None
+    odometer: Optional[int] = Field(None, ge=0, le=10_000_000)
+    station_name: Optional[str] = Field(None, max_length=200)
+    notes: Optional[str] = Field(None, max_length=2000)
 
 
 class FuelUpdate(BaseModel):
     date: Optional[_Date] = None
-    liters: Optional[float] = None
-    total_cost: Optional[float] = None
+    liters: Optional[float] = Field(None, gt=0, le=10_000)
+    total_cost: Optional[float] = Field(None, ge=0, le=10_000_000)
     fuel_type_override: Optional[FuelType] = None
-    odometer: Optional[int] = None
-    station_name: Optional[str] = None
-    notes: Optional[str] = None
+    odometer: Optional[int] = Field(None, ge=0, le=10_000_000)
+    station_name: Optional[str] = Field(None, max_length=200)
+    notes: Optional[str] = Field(None, max_length=2000)
 
 
 class FuelOut(BaseModel):

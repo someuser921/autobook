@@ -96,6 +96,7 @@ ExecStart=/root/.local/bin/uv run uvicorn app.main:app --host 0.0.0.0 --port {AP
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
+Environment=ENVIRONMENT=production
 
 [Install]
 WantedBy=multi-user.target
