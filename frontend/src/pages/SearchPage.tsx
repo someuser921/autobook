@@ -1,13 +1,14 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Pencil, Trash2 } from "lucide-react";
-import { searchApi, maintenanceApi, fuelApi } from "../api";
+import { searchApi, maintenanceApi, fuelApi, getPhotoUrl } from "../api";
 import { useVehicleStore } from "../store/vehicles";
 import { Spinner } from "../components/ui/Spinner";
 import { Modal } from "../components/ui/Modal";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { MaintenanceForm } from "../components/forms/MaintenanceForm";
 import { FuelForm } from "../components/forms/FuelForm";
+import { PhotoLightbox } from "../components/ui/PhotoLightbox";
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from "../lib/constants";
 import { formatDate, formatMoney, formatOdometer } from "../lib/utils";
 import type { SearchResult, MaintenanceRecord, FuelRecord } from "../api/types";
@@ -20,6 +21,7 @@ export function SearchPage() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [editRecord, setEditRecord] = useState<SearchResult | null>(null);
   const [deleteRecord, setDeleteRecord] = useState<SearchResult | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const handleInput = (val: string) => {
     setQuery(val);
@@ -95,7 +97,7 @@ export function SearchPage() {
         </div>
       ) : (
         <div className="divide-y divide-gray-50">
-          {results.map((r) => <SearchCard key={`${r.type}-${r.id}`} r={r} onEdit={setEditRecord} onDelete={setDeleteRecord} />)}
+          {results.map((r) => <SearchCard key={`${r.type}-${r.id}`} r={r} onEdit={setEditRecord} onDelete={setDeleteRecord} onPhotoClick={setLightboxSrc} />)}
           {results.length > 0 && (
             <div className="px-4 py-3 text-xs text-gray-400 text-center">{results.length} результатов</div>
           )}
@@ -138,11 +140,13 @@ export function SearchPage() {
         message="Удалить эту запись? Действие необратимо."
         loading={isDeleting}
       />
+
+      {lightboxSrc && <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }
 
-function SearchCard({ r, onEdit, onDelete }: { r: SearchResult; onEdit: (r: SearchResult) => void; onDelete: (r: SearchResult) => void }) {
+function SearchCard({ r, onEdit, onDelete, onPhotoClick }: { r: SearchResult; onEdit: (r: SearchResult) => void; onDelete: (r: SearchResult) => void; onPhotoClick: (src: string) => void }) {
   if (r.type === "maintenance") {
     const cat = r.category as keyof typeof CATEGORY_LABELS;
     return (
@@ -161,6 +165,19 @@ function SearchCard({ r, onEdit, onDelete }: { r: SearchResult; onEdit: (r: Sear
           {r.location && <p className="text-xs text-gray-500 truncate">📍 {r.location}</p>}
           {r.odometer && r.odometer > 0 && <p className="text-xs text-gray-400">{formatOdometer(r.odometer)}</p>}
           {r.notes && <p className="text-xs text-gray-400 line-clamp-1 italic">{r.notes}</p>}
+          {r.photos?.length > 0 && (
+            <div className="flex gap-1.5 mt-1.5 flex-wrap">
+              {r.photos.map((p) => (
+                <img
+                  key={p.id}
+                  src={getPhotoUrl(p.filename)}
+                  alt=""
+                  className="w-12 h-12 object-cover rounded-lg cursor-pointer"
+                  onClick={() => onPhotoClick(getPhotoUrl(p.filename))}
+                />
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             {r.cost != null && <span className="text-sm font-semibold text-gray-800">{formatMoney(r.cost)}</span>}
             {(r.next_date || (r.next_odometer != null && r.next_odometer > 0)) && (

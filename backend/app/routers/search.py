@@ -63,6 +63,7 @@ async def search(
             notes=r.notes,
             next_date=r.next_date.isoformat() if r.next_date else None,
             next_odometer=r.next_odometer,
+            photos=r.photos,
         ))
 
     # Search fuel by station name

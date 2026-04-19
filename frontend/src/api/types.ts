@@ -132,4 +132,5 @@ export interface SearchResult {
   liters: number | null;
   price_per_liter: number | null;
   station_name: string | null;
+  photos: MaintenancePhoto[];
 }

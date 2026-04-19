@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+from app.schemas.photo import MaintenancePhotoOut
 
 
 class CategoryStat(BaseModel):
@@ -53,3 +54,5 @@ class SearchResult(BaseModel):
     liters: Optional[float] = None
     price_per_liter: Optional[float] = None
     station_name: Optional[str] = None
+    # photos (maintenance only)
+    photos: list[MaintenancePhotoOut] = []
