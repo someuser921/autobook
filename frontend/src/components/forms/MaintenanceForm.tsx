@@ -21,12 +21,14 @@ type FormData = {
 interface Props {
   initial?: Partial<MaintenanceRecord>;
   locationSuggestions?: string[];
+  pendingPhotos?: File[];
+  onPendingPhotosChange?: (files: File[]) => void;
   onSubmit: (data: Partial<MaintenanceRecord>) => void;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function MaintenanceForm({ initial, locationSuggestions = [], onSubmit, onCancel, loading }: Props) {
+export function MaintenanceForm({ initial, locationSuggestions = [], pendingPhotos, onPendingPhotosChange, onSubmit, onCancel, loading }: Props) {
   const [photos, setPhotos] = useState<MaintenancePhoto[]>(initial?.photos || []);
   const { register, handleSubmit, setValue, control } = useForm<FormData>({
     defaultValues: {
@@ -128,9 +130,16 @@ export function MaintenanceForm({ initial, locationSuggestions = [], onSubmit, o
         <label className="label">Заметки</label>
         <textarea className="input resize-none" rows={2} placeholder="..." {...register("notes")} />
       </div>
+
+      {/* Edit mode: record exists, upload immediately */}
       {initial?.id && (
         <PhotoSection recordId={initial.id} photos={photos} onChange={setPhotos} />
       )}
+      {/* Create mode: collect files, upload after save */}
+      {!initial?.id && pendingPhotos !== undefined && onPendingPhotosChange && (
+        <PhotoSection pendingFiles={pendingPhotos} onPendingFilesChange={onPendingPhotosChange} />
+      )}
+
       <div className="flex gap-2 pt-1">
         <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Отмена</button>
         <button type="submit" className="btn-primary flex-1" disabled={loading}>

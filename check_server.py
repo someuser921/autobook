@@ -13,9 +13,8 @@ def run(cmd):
     if err: print("ERR:", err)
     print()
 
-run("ls /etc/nginx/sites-enabled/")
-run("ls /etc/nginx/conf.d/")
-run("grep -r 'api-auto' /etc/nginx/ 2>/dev/null")
-run("grep -r '8091' /etc/nginx/ 2>/dev/null")
-run("curl -s -o /dev/null -w '%{http_code}' https://api-auto.freedomxz.xyz/health")
+run("nginx -v")
+run("nginx -V 2>&1 | grep -o 'http_v2_module'")
+run("curl --http2 -s -o /dev/null -w 'HTTP version: %{http_version}\\n' https://api-auto.freedomxz.xyz/health")
+run("curl --http2-prior-knowledge -s -o /dev/null -w 'HTTP: %{http_version}\\n' https://api-auto.freedomxz.xyz/health 2>&1 | head -3")
 ssh.close()
