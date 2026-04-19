@@ -22,11 +22,37 @@ interface PendingProps {
 
 type Props = EditProps | PendingProps;
 
+function toJpeg(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX = 1920;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        resolve(blob ? new File([blob], "photo.jpg", { type: "image/jpeg" }) : file);
+      }, "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export function PhotoSection(props: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const isPending = "pendingFiles" in props && props.pendingFiles !== undefined;
 
@@ -36,18 +62,21 @@ export function PhotoSection(props: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    setError(null);
+
+    const converted = await toJpeg(file);
 
     if (isPending) {
-      props.onPendingFilesChange([...props.pendingFiles, file]);
+      props.onPendingFilesChange([...props.pendingFiles, converted]);
       return;
     }
 
     setUploading(true);
     try {
-      const res = await photosApi.upload(props.recordId, file);
+      const res = await photosApi.upload(props.recordId, converted);
       props.onChange([...props.photos, res.data]);
     } catch {
-      // silent
+      setError("Не удалось загрузить фото");
     } finally {
       setUploading(false);
     }
@@ -135,6 +164,7 @@ export function PhotoSection(props: Props) {
         onChange={handleFileChange}
       />
 
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );

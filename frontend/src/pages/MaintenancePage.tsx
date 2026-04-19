@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
 import { maintenanceApi, photosApi, getPhotoUrl } from "../api";
@@ -25,6 +25,11 @@ export function MaintenancePage() {
   const [showFilter, setShowFilter] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
+  const pendingPhotosRef = useRef<File[]>([]);
+  const handlePendingPhotosChange = (files: File[]) => {
+    pendingPhotosRef.current = files;
+    setPendingPhotos(files);
+  };
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["maintenance", activeVehicleId, filterCategory],
@@ -46,9 +51,10 @@ export function MaintenancePage() {
     mutationFn: (data: Partial<MaintenanceRecord>) => maintenanceApi.create(activeVehicleId!, data),
     onSuccess: async (res) => {
       const recordId = res.data.id;
-      for (const file of pendingPhotos) {
+      for (const file of pendingPhotosRef.current) {
         try { await photosApi.upload(recordId, file); } catch { /* silent */ }
       }
+      pendingPhotosRef.current = [];
       setPendingPhotos([]);
       qc.invalidateQueries({ queryKey: ["maintenance"] });
       qc.invalidateQueries({ queryKey: ["vehicles"] });
@@ -181,14 +187,14 @@ export function MaintenancePage() {
       </Modal>
 
       {/* Add form */}
-      <Modal open={showForm} onClose={() => { setShowForm(false); setPendingPhotos([]); }} title="Новая запись">
+      <Modal open={showForm} onClose={() => { setShowForm(false); handlePendingPhotosChange([]); }} title="Новая запись">
         <MaintenanceForm
           locationSuggestions={locationSuggestions}
           pendingPhotos={pendingPhotos}
-          onPendingPhotosChange={setPendingPhotos}
+          onPendingPhotosChange={handlePendingPhotosChange}
           loading={createMutation.isPending}
           onSubmit={(data) => createMutation.mutate(data)}
-          onCancel={() => { setShowForm(false); setPendingPhotos([]); }}
+          onCancel={() => { setShowForm(false); handlePendingPhotosChange([]); }}
         />
       </Modal>
 
