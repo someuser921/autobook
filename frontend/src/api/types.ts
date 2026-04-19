@@ -34,6 +34,13 @@ export interface Vehicle {
   created_at: string;
 }
 
+export interface MaintenancePhoto {
+  id: number;
+  maintenance_record_id: number;
+  filename: string;
+  created_at: string;
+}
+
 export interface MaintenanceRecord {
   id: number;
   vehicle_id: number;
@@ -48,6 +55,7 @@ export interface MaintenanceRecord {
   next_odometer: number | null;
   notes: string | null;
   created_at: string;
+  photos: MaintenancePhoto[];
 }
 
 export interface FuelRecord {

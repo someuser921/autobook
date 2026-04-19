@@ -4,6 +4,10 @@ from datetime import date, datetime
 from sqlalchemy import String, Integer, ForeignKey, DateTime, Date, Numeric, Text, func, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.photo import MaintenancePhoto
 
 
 class MaintenanceCategory(str, enum.Enum):
@@ -37,3 +41,6 @@ class MaintenanceRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     vehicle: Mapped["Vehicle"] = relationship("Vehicle", back_populates="maintenance_records")
+    photos: Mapped[list["MaintenancePhoto"]] = relationship(
+        "MaintenancePhoto", back_populates="record", lazy="selectin", cascade="all, delete-orphan"
+    )

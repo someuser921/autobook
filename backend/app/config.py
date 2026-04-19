@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 43200  # 30 days
     allowed_origins: str = "http://localhost:5173"
+    uploads_dir: str = "uploads"
 
     @property
     def origins_list(self) -> list[str]:

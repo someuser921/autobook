@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
-import { maintenanceApi } from "../api";
+import { maintenanceApi, getPhotoUrl } from "../api";
+import { PhotoLightbox } from "../components/ui/PhotoLightbox";
 import { useVehicleStore } from "../store/vehicles";
 import { Modal } from "../components/ui/Modal";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
@@ -22,6 +23,7 @@ export function MaintenancePage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filterCategory, setFilterCategory] = useState<MaintenanceCategory | "">("");
   const [showFilter, setShowFilter] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["maintenance", activeVehicleId, filterCategory],
@@ -110,6 +112,19 @@ export function MaintenancePage() {
                 {r.location && <p className="text-xs text-gray-500 truncate">📍 {r.location}</p>}
                 {r.odometer && <p className="text-xs text-gray-400">{formatOdometer(r.odometer)}</p>}
                 {r.notes && <p className="text-xs text-gray-400 line-clamp-1 italic">{r.notes}</p>}
+                {r.photos?.length > 0 && (
+                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                    {r.photos.map((p) => (
+                      <img
+                        key={p.id}
+                        src={getPhotoUrl(p.filename)}
+                        alt=""
+                        className="w-12 h-12 object-cover rounded-lg cursor-pointer"
+                        onClick={() => setLightboxSrc(getPhotoUrl(p.filename))}
+                      />
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center gap-3 mt-1">
                   {r.cost != null && (
                     <span className="text-sm font-semibold text-gray-800">{formatMoney(r.cost)}</span>
@@ -186,6 +201,8 @@ export function MaintenancePage() {
         message="Удалить эту запись? Действие необратимо."
         loading={deleteMutation.isPending}
       />
+
+      {lightboxSrc && <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

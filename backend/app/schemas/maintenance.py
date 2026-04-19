@@ -2,6 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 from datetime import date, datetime
 from app.models.maintenance import MaintenanceCategory
+from app.schemas.photo import MaintenancePhotoOut
 
 _Date = date  # alias to avoid Pydantic v2 name collision when field name == type name
 
@@ -46,5 +47,6 @@ class MaintenanceOut(BaseModel):
     next_odometer: Optional[int]
     notes: Optional[str]
     created_at: datetime
+    photos: list[MaintenancePhotoOut] = []
 
     model_config = {"from_attributes": True}

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { CATEGORY_LABELS } from "../../lib/constants";
 import { today } from "../../lib/utils";
-import type { MaintenanceRecord, MaintenanceCategory } from "../../api/types";
+import { PhotoSection } from "./PhotoSection";
+import type { MaintenanceRecord, MaintenanceCategory, MaintenancePhoto } from "../../api/types";
 
 type FormData = {
   date: string;
@@ -25,6 +27,7 @@ interface Props {
 }
 
 export function MaintenanceForm({ initial, locationSuggestions = [], onSubmit, onCancel, loading }: Props) {
+  const [photos, setPhotos] = useState<MaintenancePhoto[]>(initial?.photos || []);
   const { register, handleSubmit, setValue, control } = useForm<FormData>({
     defaultValues: {
       date: initial?.date || today(),
@@ -125,6 +128,9 @@ export function MaintenanceForm({ initial, locationSuggestions = [], onSubmit, o
         <label className="label">Заметки</label>
         <textarea className="input resize-none" rows={2} placeholder="..." {...register("notes")} />
       </div>
+      {initial?.id && (
+        <PhotoSection recordId={initial.id} photos={photos} onChange={setPhotos} />
+      )}
       <div className="flex gap-2 pt-1">
         <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Отмена</button>
         <button type="submit" className="btn-primary flex-1" disabled={loading}>

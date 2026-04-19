@@ -2,6 +2,7 @@ import { api } from "./client";
 import type {
   User, Vehicle, MaintenanceRecord, FuelRecord,
   MaintenanceStats, FuelStats, SearchResult, MaintenanceCategory, PlannedItem,
+  MaintenancePhoto,
 } from "./types";
 
 // Auth
@@ -58,6 +59,16 @@ export const plannedApi = {
   delete: (id: number) => api.delete(`/planned/${id}`),
 };
 
+// Photos
+export const photosApi = {
+  upload: (recordId: number, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return api.post<MaintenancePhoto>(`/maintenance/${recordId}/photos`, fd);
+  },
+  delete: (photoId: number) => api.delete(`/photos/${photoId}`),
+};
+
 // Search
 export const searchApi = {
   search: (q: string, vehicleId?: number) =>
@@ -65,3 +76,4 @@ export const searchApi = {
 };
 
 export * from "./types";
+export { getPhotoUrl } from "./client";
